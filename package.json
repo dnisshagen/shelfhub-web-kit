@@ -1,0 +1,19 @@
+{
+  "name": "@shelfhub/web-kit",
+  "version": "0.1.0",
+  "description": "Shared web components for the My Shelf family of sites",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": ["src"],
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.105.0",
+    "next": ">=15",
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
