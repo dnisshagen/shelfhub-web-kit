@@ -119,7 +119,9 @@ function ShelfFamily() {
               )}
             </>
           );
-          return f.live && f.url
+          // A live landing page earns a link even before the app ships; the
+          // "soon" chip (on !f.live) still marks app status. No url = no link.
+          return f.url
             ? <a key={f.name} href={f.url} style={{ textDecoration: 'none' }}>{body}</a>
             : <div key={f.name}>{body}</div>;
         })}
