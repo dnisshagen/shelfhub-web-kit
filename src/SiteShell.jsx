@@ -52,12 +52,20 @@ export function SiteNav() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
         {nav.map(({ href, label }) => {
           const active = pathname === href || pathname.startsWith(href + '/');
+          // Padding + matching negative margin: a 44px hit box with zero
+          // layout or visual change (the links measured 18px tall on phones).
+          // The active underline lives on the inner span so it stays snug
+          // under the text instead of at the padded edge.
           return (
             <Link key={href} href={href} style={{
               fontSize: 11.5, fontWeight: 600, letterSpacing: '.19em', textTransform: 'uppercase',
               color: active ? t.ink : t.muted, textDecoration: 'none',
-              borderBottom: `1px solid ${active ? t.amber : 'transparent'}`, paddingBottom: 3,
-            }}>{label}</Link>
+              display: 'inline-block', padding: '13px 8px', margin: '-13px -8px',
+            }}>
+              <span style={{
+                borderBottom: `1px solid ${active ? t.amber : 'transparent'}`, paddingBottom: 3,
+              }}>{label}</span>
+            </Link>
           );
         })}
         <button
@@ -65,7 +73,7 @@ export function SiteNav() {
           style={{
             fontSize: 12.5, fontWeight: 600, background: 'transparent', color: t.ink,
             border: `1px solid ${t.amberLine}`, borderRadius: 999,
-            padding: '7px 15px', cursor: 'pointer',
+            padding: '10px 16px', cursor: 'pointer',
           }}
         >{acc?.user ? acc.user.name : 'Sign in'}</button>
       </div>
@@ -151,8 +159,12 @@ export function SiteFooter() {
                   display: 'flex', flexDirection: 'column', gap: 9 }}>
                   {col.items.map((it) => (
                     <li key={it.label}>
+                      {/* 28px hit box on a 29px row pitch (16px visible), no
+                          layout change; 6px vertical keeps boxes from
+                          overlapping the next row. */}
                       <a href={it.href} style={{
                         fontSize: 13.5, color: t.body, textDecoration: 'none',
+                        display: 'inline-block', padding: '6px 10px', margin: '-6px -10px',
                       }}>{it.label}</a>
                     </li>
                   ))}
