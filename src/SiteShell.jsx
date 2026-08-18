@@ -32,11 +32,45 @@ export function Page({ children, wide = false, style }) {
   );
 }
 
+/**
+ * The site nav, and on a phone a burger sheet rather than a wrapped pile.
+ *
+ * Ported from My Bar Shelf, which solved this first and whose version is the
+ * one that has actually been used. Bar's own component could not be copied:
+ * it is welded to bar's client-side router (hrefFor, navTo, route.page) and
+ * this one navigates with next/link and usePathname. What transfers is the
+ * pattern and the two icons.
+ *
+ * It lives in the KIT rather than in a consumer because a mobile nav is
+ * behaviour, and WEB.md draws the line there: the kit owns behaviour, the app
+ * owns identity. Whiskey and coffee both wrapped their links onto two or three
+ * lines before this, and fixing it in one of them would have forked the nav.
+ *
+ * The desktop links stay in the DOM at every width and are hidden with CSS, so
+ * a crawler still sees every internal link on a phone-shaped viewport. That is
+ * bar's rule and it is the reason this is not a conditional render.
+ */
 export function SiteNav() {
   const t = useTheme();
   const { appName, nav = [], fonts } = useShelfKit();
   const acc = useAccount();
   const pathname = usePathname() || '/';
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  // A sheet that survives navigation would cover the page it just opened.
+  React.useEffect(() => { setMenuOpen(false); }, [pathname]);
+
+  // Escape closes it. A sheet with no keyboard exit is a trap for anyone not
+  // using a touchscreen, and this renders at desktop widths too if the window
+  // is narrow.
+  React.useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
+  const isActive = (href) => pathname === href || pathname.startsWith(href + '/');
 
   return (
     <nav style={{
@@ -44,39 +78,94 @@ export function SiteNav() {
       padding: '24px 24px 0', display: 'flex', alignItems: 'center',
       justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
     }}>
+      <style>{`
+        .shk-nav-burger { display: none; }
+        @media (max-width: 760px) {
+          /* One row: wordmark and burger. The links keep their DOM node and
+             lose only their box, so nothing disappears from the crawl. */
+          .shk-nav-links { display: none !important; }
+          .shk-nav-burger {
+            display: flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; flex-shrink: 0;
+            background: none; border: none; cursor: pointer; padding: 0;
+          }
+        }
+      `}</style>
+
       <Link href="/" style={{
         fontFamily: fonts?.display || 'Georgia, serif', fontSize: 18, fontWeight: 500,
         color: t.amber, textDecoration: 'none',
       }}>{appName}</Link>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
-        {nav.map(({ href, label }) => {
-          const active = pathname === href || pathname.startsWith(href + '/');
-          // Padding + matching negative margin: a 44px hit box with zero
-          // layout or visual change (the links measured 18px tall on phones).
-          // The active underline lives on the inner span so it stays snug
-          // under the text instead of at the padded edge.
-          return (
-            <Link key={href} href={href} style={{
-              fontSize: 11.5, fontWeight: 600, letterSpacing: '.19em', textTransform: 'uppercase',
-              color: active ? t.ink : t.muted, textDecoration: 'none',
-              display: 'inline-block', padding: '13px 8px', margin: '-13px -8px',
-            }}>
-              <span style={{
-                borderBottom: `1px solid ${active ? t.amber : 'transparent'}`, paddingBottom: 3,
-              }}>{label}</span>
-            </Link>
-          );
-        })}
+      <div className="shk-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+        {nav.map(({ href, label }) => (
+          <Link key={href} href={href} style={{
+            fontSize: 11.5, fontWeight: 600, letterSpacing: '.19em', textTransform: 'uppercase',
+            color: isActive(href) ? t.ink : t.muted, textDecoration: 'none',
+            borderBottom: `1px solid ${isActive(href) ? t.amber : 'transparent'}`, paddingBottom: 3,
+          }}>{label}</Link>
+        ))}
         <button
           onClick={() => acc?.openModal(acc?.user ? 'account' : 'signin')}
           style={{
             fontSize: 12.5, fontWeight: 600, background: 'transparent', color: t.ink,
             border: `1px solid ${t.amberLine}`, borderRadius: 999,
-            padding: '10px 16px', cursor: 'pointer',
+            padding: '7px 15px', cursor: 'pointer',
           }}
         >{acc?.user ? acc.user.name : 'Sign in'}</button>
       </div>
+
+      <button
+        className="shk-nav-burger"
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((o) => !o)}
+      >
+        {menuOpen ? (
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4 4 L16 16 M16 4 L4 16" stroke={t.amber} strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+        ) : (
+          <svg width="22" height="16" viewBox="0 0 22 16" aria-hidden="true">
+            <path d="M1 1.5 H21 M1 8 H21 M1 14.5 H21" stroke={t.amber} strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+        )}
+      </button>
+
+      {menuOpen && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 60,
+          background: t.bg, borderBottom: `1px solid ${t.line}`,
+          boxShadow: '0 28px 56px rgba(0,0,0,0.6)',
+          padding: '4px 24px 22px', display: 'flex', flexDirection: 'column',
+          maxHeight: 'calc(100vh - 80px)', overflowY: 'auto',
+        }}>
+          {nav.map(({ href, label }) => (
+            <Link key={href} href={href} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              // 52px, not the 44px minimum. This is the one control a thumb uses
+              // on every page, and the rows sit directly under each other.
+              minHeight: 52, padding: '8px 2px', textDecoration: 'none',
+              fontFamily: fonts?.display || 'Georgia, serif',
+              fontSize: 21, fontWeight: 500,
+              color: isActive(href) ? t.amber : t.ink,
+              borderBottom: `1px solid ${t.lineSoft}`,
+            }}>
+              {label}
+              {isActive(href) ? <span aria-hidden="true" style={{ color: t.amber, fontSize: 11 }}>&#9670;</span> : null}
+            </Link>
+          ))}
+          <button
+            onClick={() => { setMenuOpen(false); acc?.openModal(acc?.user ? 'account' : 'signin'); }}
+            style={{
+              marginTop: 18, alignSelf: 'flex-start',
+              fontSize: 12.5, fontWeight: 600, background: 'transparent', color: t.ink,
+              border: `1px solid ${t.amberLine}`, borderRadius: 999,
+              padding: '11px 20px', minHeight: 44, cursor: 'pointer',
+            }}
+          >{acc?.user ? acc.user.name : 'Sign in'}</button>
+        </div>
+      )}
     </nav>
   );
 }
