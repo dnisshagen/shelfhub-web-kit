@@ -108,7 +108,9 @@ export function AccountProvider({ children }) {
   const deleteAccount = async () => {
     const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
     if (error) throw error;
-    if (data && data.success === false) throw new Error(data.error || 'Delete failed');
+    // Fail closed: an empty or malformed response is not a success. The old
+    // check (data.success === false) treated a missing body as deleted.
+    if (!data?.success) throw new Error(data?.error || 'Delete failed');
     await supabase.auth.signOut();
     setOpen(false);
   };
@@ -158,6 +160,11 @@ function fieldStyle(t) {
   };
 }
 
+const DANGER = '#C0563F';
+
+// app_metadata carries raw provider ids; the chips wear display names.
+const providerLabel = (p) => ({ email: 'Email', google: 'Google', apple: 'Apple' }[p] || p);
+
 function AccountModal() {
   const t = useTheme();
   const { appName, fonts } = useShelfKit();
@@ -168,9 +175,26 @@ function AccountModal() {
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState(null);
   const [note, setNote] = React.useState(null);
+  // Deletion arms on the first tap and reverts on its own; see onDelete.
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const confirmTimer = React.useRef(null);
 
   React.useEffect(() => {
-    if (!acc?.open) { setErr(null); setNote(null); setBusy(false); }
+    if (!acc?.open) {
+      setErr(null); setNote(null); setBusy(false);
+      setConfirmDelete(false); clearTimeout(confirmTimer.current);
+    }
+  }, [acc?.open]);
+
+  React.useEffect(() => () => clearTimeout(confirmTimer.current), []);
+
+  // Escape closes it, same as the nav sheet. Backdrop click alone strands
+  // anyone on a keyboard. Bar shipped this first; the kit lagged.
+  React.useEffect(() => {
+    if (!acc?.open) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') acc.close(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [acc?.open]);
 
   React.useEffect(() => {
@@ -198,6 +222,20 @@ function AccountModal() {
   const isAccount = acc.tab === 'account' && acc.user;
   const displayFont = fonts?.display || 'Georgia, serif';
 
+  // Two taps with a six second revert, ported from My Bar Shelf. A native
+  // confirm() is jarring on iOS Safari, unstylable, and invisible to the DOM,
+  // so nothing could verify it; the armed state lives inside the modal.
+  const onDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      confirmTimer.current = setTimeout(() => setConfirmDelete(false), 6000);
+      return;
+    }
+    clearTimeout(confirmTimer.current);
+    setConfirmDelete(false);
+    run(() => acc.deleteAccount());
+  };
+
   return (
     <div
       role="dialog" aria-modal="true" onClick={acc.close}
@@ -220,21 +258,31 @@ function AccountModal() {
             <div style={{ fontFamily: displayFont, fontSize: 26, fontWeight: 700, color: t.ink }}>
               {acc.user.name}
             </div>
-            <div style={{ fontSize: 12.5, color: t.muted, margin: '6px 0 26px' }}>
-              {acc.user.email} · since {acc.user.since} · {acc.user.providers.join(', ')}
+            <div style={{ fontSize: 12.5, color: t.muted, margin: '6px 0 0' }}>
+              {acc.user.email} · since {acc.user.since}
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', margin: '10px 0 26px' }}>
+              {acc.user.providers.map((p) => (
+                <span key={p} style={{
+                  fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase',
+                  color: t.muted, border: `1px solid ${t.amberLine}`, borderRadius: 999,
+                  padding: '3px 9px',
+                }}>{providerLabel(p)}</span>
+              ))}
             </div>
             <button onClick={acc.signOut} style={ghost(t)}>Sign out</button>
             <button
-              onClick={() => {
-                if (window.confirm('Delete your account and everything in it? This cannot be undone.')) {
-                  run(() => acc.deleteAccount());
-                }
+              onClick={onDelete}
+              disabled={busy}
+              style={{
+                ...ghost(t), marginTop: 8,
+                borderColor: confirmDelete ? DANGER : 'transparent',
+                color: confirmDelete ? DANGER : t.muted,
               }}
-              style={{ ...ghost(t), marginTop: 8, borderColor: 'transparent', color: t.muted }}
             >
-              Delete account
+              {confirmDelete ? 'Tap again to confirm' : 'Delete account'}
             </button>
-            {err && <div style={{ fontSize: 12.5, color: '#C0563F', marginTop: 12 }}>{err}</div>}
+            {err && <div style={{ fontSize: 12.5, color: DANGER, marginTop: 12 }}>{err}</div>}
           </>
         ) : (
           <>
@@ -258,7 +306,7 @@ function AccountModal() {
                   autoComplete={acc.tab === 'signup' ? 'new-password' : 'current-password'} />
               </Field>
 
-              {err && <div style={{ fontSize: 12.5, color: '#C0563F', marginBottom: 12 }}>{err}</div>}
+              {err && <div style={{ fontSize: 12.5, color: DANGER, marginBottom: 12 }}>{err}</div>}
               {note && <div style={{ fontSize: 12.5, color: t.amberDeep, marginBottom: 12 }}>{note}</div>}
 
               <button type="submit" disabled={busy} style={solid(t, busy)}>
