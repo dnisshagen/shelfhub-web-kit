@@ -9,7 +9,10 @@
  * entirely for anything with no page at all.
  *
  * Scope ruling 2026-08-04 (shelfhub/PORTFOLIO.md): active brands only — bar,
- * coffee, whiskey, cigar, plus the hub. Wine/fragrance/idea brands wait.
+ * coffee, whiskey, cigar, plus the hub. Wine/idea brands wait. Fragrance
+ * joined 2026-08-23 (MYBAR-298): its landing page has been live in
+ * shelfhub-landing all along, and this file's own rule is that a live page
+ * is worth linking before the app ships.
  */
 export const SHELF_FAMILY = [
   {
@@ -34,6 +37,12 @@ export const SHELF_FAMILY = [
     name: 'My Cigar Shelf',
     url: 'https://www.mycigarshelf.com',
     tagline: 'Humidor, rotation, and tasting notes.',
+    live: false,
+  },
+  {
+    name: 'My Fragrance Shelf',
+    url: 'https://www.myfragranceshelf.com',
+    tagline: 'Your bottles, their seasons, and what to wear tonight.',
     live: false,
   },
   {

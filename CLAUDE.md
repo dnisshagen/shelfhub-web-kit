@@ -14,7 +14,7 @@ Rules that bind this repo:
   behaviour should vary per site, it should actually be uniform and live in the component.
 - Every change ships as a new git tag; consumers bump deliberately, one PR per site.
 - `src/family.js` `SHELF_FAMILY` is the portfolio roster for cross-links — keep it in sync
-  with the apps/sites that actually exist (known drift: `fragrance` missing).
+  with the apps/sites that actually exist (fragrance drift closed 2026-08-23, MYBAR-298).
 
 ## Tagging
 
