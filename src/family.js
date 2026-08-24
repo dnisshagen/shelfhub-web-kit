@@ -45,6 +45,19 @@ export const SHELF_FAMILY = [
     tagline: 'Your bottles, their seasons, and what to wear tonight.',
     live: false,
   },
+  // Beer and supply joined 2026-08-24: both are real apps in TestFlight.
+  // No url yet — their domains are parked, and this file's rule is that
+  // url gates linking on a live page, not on the app.
+  {
+    name: 'My Beer Shelf',
+    tagline: 'The cellar and the fridge, kept straight.',
+    live: false,
+  },
+  {
+    name: 'My Supply Shelf',
+    tagline: 'Your household stores, measured against the official list.',
+    live: false,
+  },
   {
     name: 'Shelf Hub',
     url: 'https://www.myshelfhub.com',
