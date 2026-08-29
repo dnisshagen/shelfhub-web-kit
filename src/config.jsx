@@ -17,6 +17,11 @@ const ShelfKitContext = React.createContext(null);
  *   siteUrl:   'https://mycoffeeshelf.com',
  *   tokens:    { bg, surface, ink, body, muted, faint, amber, ... },
  *   fonts:     { display, body, mono },
+ *   appId:     'coffee_shelf' | 'bar_shelf' | 'whiskey_shelf' | 'cigar_shelf' |
+ *              'wine_shelf' | 'beer_shelf' | 'supply_shelf'
+ *              REQUIRED for account deletion. Without it the delete button
+ *              fails closed rather than deleting another app's data — see the
+ *              comment on deleteAccount in Account.jsx.
  *   nav:       [{ href, label }],
  *   footer:    [{ title, items: [{ label, href }] }],
  *   family:    [{ name, url, tagline, live }],

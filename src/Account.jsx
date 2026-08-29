@@ -30,7 +30,7 @@ function shapeUser(u) {
 }
 
 export function AccountProvider({ children }) {
-  const { supabase, auth } = useShelfKit();
+  const { supabase, auth, appId } = useShelfKit();
   const redirectPath = auth?.redirectPath || '/';
   const [user, setUser] = React.useState(null);
   const [authReady, setAuthReady] = React.useState(false);
@@ -105,8 +105,31 @@ export function AccountProvider({ children }) {
 
   // Deletion goes through an edge function because it has to remove rows the
   // user can read but not delete, and the auth row itself.
+  //
+  // THE BODY IS NOT OPTIONAL. delete-account resolves the caller as
+  // `body.app_id ?? (body.confirm === true ? 'coffee_shelf' : 'shelf')`, and
+  // that empty-body default is deliberate: legacy bar and whiskey APP builds
+  // POST with no body and can never be updated, so they fall to the shelf
+  // group on purpose. A website that sends no body impersonates one of them.
+  //
+  // Until 2026-08-29 this function did exactly that, so "Delete account" on
+  // coffee's and wine's live sites erased the user's BAR and WHISKEY inventory
+  // and left the data they were trying to delete untouched. Sending app_id is
+  // what makes the call mean what the button says.
+  //
+  // Fail closed when the site has not declared an appId: refusing to delete is
+  // recoverable, deleting the wrong app's shelf is not.
   const deleteAccount = async () => {
-    const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+    if (!appId) {
+      throw new Error(
+        'This site cannot delete accounts yet: no appId in its shelf config. ' +
+        'Email us and we will do it by hand.',
+      );
+    }
+    const { data, error } = await supabase.functions.invoke('delete-account', {
+      method: 'POST',
+      body: { app_id: appId, confirm: true },
+    });
     if (error) throw error;
     // Fail closed: an empty or malformed response is not a success. The old
     // check (data.success === false) treated a missing body as deleted.
