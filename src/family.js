@@ -59,6 +59,12 @@ export const SHELF_FAMILY = [
     live: false,
   },
   {
+    name: 'My Wine Shelf',
+    url: 'https://www.mywineshelf.com',
+    tagline: 'The cellar, and how each style is served.',
+    live: false,
+  },
+  {
     name: 'Shelf Hub',
     url: 'https://www.myshelfhub.com',
     tagline: 'One family of shelves, one account.',
