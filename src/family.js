@@ -45,16 +45,19 @@ export const SHELF_FAMILY = [
     tagline: 'Your bottles, their seasons, and what to wear tonight.',
     live: false,
   },
-  // Beer and supply joined 2026-08-24: both are real apps in TestFlight.
-  // No url yet — their domains are parked, and this file's rule is that
-  // url gates linking on a live page, not on the app.
+  // Beer and supply joined 2026-08-24 without urls while their domains were
+  // parked. Both pages are live now (beer's full site per WEB.md 2026-09-01,
+  // supply's landing), so they link as of v0.1.9. `live` still tracks the
+  // APP, and both apps are TestFlight-only.
   {
     name: 'My Beer Shelf',
+    url: 'https://www.mybeershelf.com',
     tagline: 'The cellar and the fridge, kept straight.',
     live: false,
   },
   {
     name: 'My Supply Shelf',
+    url: 'https://www.mysupplyshelf.com',
     tagline: 'Your household stores, measured against the official list.',
     live: false,
   },
