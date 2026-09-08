@@ -1,13 +1,15 @@
 {
   "name": "@shelfhub/web-kit",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Shared web components for the My Shelf family of sites",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js"
   },
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "peerDependencies": {
     "@supabase/supabase-js": "^2.105.0",
     "next": ">=15",
