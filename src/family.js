@@ -31,7 +31,11 @@ export const SHELF_FAMILY = [
     name: 'My Whiskey Shelf',
     url: 'https://www.mywhiskeyshelf.com',
     tagline: 'For the bottles you drink neat.',
-    live: false,
+    // Live on the App Store 2026-09-08, verified against the storefront in se,
+    // gb, de and us rather than against a dashboard. Google Play is still in
+    // review, and `live` tracks whether the APP is out rather than which
+    // stores carry it, so this flips on the first one.
+    live: true,
   },
   {
     name: 'My Cigar Shelf',
